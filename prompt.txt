@@ -1,0 +1,35 @@
+Prompt Maestro para Actualización de Juego
+Actúa como un desarrollador experto en JavaScript, CSS3 y Firebase Realtime Database. Necesito actualizar mi juego de "Ahorcado Matemático" basándome en los archivos firebase-config.js, index.html, preguntas.js y script.js proporcionados.
+
+REQUERIMIENTOS DE FUNCIONALIDAD:
+
+Preguntas de Selección Múltiple: Rediseña preguntas.js para que cada reto tenga la estructura { q: "pregunta", options: ["op1", "op2", "op3", "op4"], a: "opción_correcta" }.
+
+Sistema de Puntuación (Escala 1.0 a 5.0): >    * Cada equipo inicia con 5.0.
+
+Por cada error en el reto matemático o letra incorrecta en el ahorcado, restar 0.5.
+
+El puntaje mínimo no puede ser menor a 1.0.
+
+Interfaz Dinámica de Respuestas: En el archivo index.html y script.js, reemplaza el input de respuesta por 4 botones de opción que se generen automáticamente al mostrar un reto.
+
+Certificado de Ganador (Modal HTML/CSS): >    * Al ganar (estado victoria), debe aparecer un Certificado centrado en pantalla con bordes dorados, un sello visual de "Excelencia" y el texto: "Certificado de Logro Matemático otorgado a: [Nombre del Equipo] por obtener una calificación de [Puntaje] en la Sala [NombreSala]".
+
+Incluye un botón para "Descargar" o "Cerrar".
+
+Integración con Firebase: Al finalizar el juego, el script debe ejecutar la función registrarResultado(equipo, 'ahorcado', puntajeFinal, sala) importada de firebase-config.js para persistir la nota en la base de datos.
+
+REQUERIMIENTOS ESTÉTICOS:
+
+Los botones de opción deben cambiar de color al pasar el mouse (hover).
+
+El certificado debe ser responsivo para dispositivos móviles.
+
+ENTREGABLE: Dame el código actualizado y completo de los 4 archivos para integrarlos directamente.
+
+💡 Tips para tu implementación:
+Puntaje Progresivo: He definido que el puntaje baje de a 0.5. Si quieres que la actividad sea más exigente, puedes pedirle a la IA que reste 1.0 por cada error.
+
+El Certificado: Al ser en HTML/CSS, los estudiantes podrán tomarle captura de pantalla fácilmente para enviártelo por WhatsApp o subirlo a tu plataforma de seguimiento.
+
+Firebase: Asegúrate de que las reglas de tu base de datos permitan la escritura en los nodos historial y records para que el registrarResultado funcione correctamente.

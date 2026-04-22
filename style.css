@@ -1,0 +1,315 @@
+/* style.css */
+:root { 
+    --primary: #0f172a; 
+    --accent: #2563eb; 
+    --bg: #f8fafc; 
+    --text: #334155;
+    --error: #ef4444; 
+    --success: #22c55e; 
+}
+
+body { 
+    font-family: 'Segoe UI', system-ui, sans-serif; 
+    background: var(--bg); 
+    margin: 0; 
+    padding: 0; 
+    display: flex; 
+    flex-direction: column; 
+    height: 100dvh; 
+    overflow: hidden; 
+}
+
+.pantalla { 
+    display: none; 
+    flex-direction: column; 
+    height: 100%; 
+    width: 100%; 
+    max-width: 500px; 
+    margin: 0 auto; 
+    background: white; 
+}
+
+.pantalla.activa { display: flex; }
+
+#pantalla-inicio { 
+    padding: 20px; 
+    justify-content: center; 
+    align-items: center; 
+    text-align: center; 
+    box-sizing: border-box; 
+}
+
+.game-header { 
+    background: var(--primary); 
+    color: white; 
+    padding: 10px 15px; 
+    text-align: center; 
+    flex-shrink: 0;
+}
+
+.header-top {
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center;
+    font-size: 0.8rem;
+}
+
+.btn-salir {
+    background: var(--error);
+    color: white;
+    border: none;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.word-box { 
+    font-size: clamp(1.5rem, 7vw, 2.2rem); 
+    margin: 10px 0; 
+    font-family: 'Courier New', monospace; 
+    font-weight: bold; 
+    color: #38bdf8; 
+    display: flex;
+    flex-wrap: wrap; 
+    justify-content: center;
+    gap: 8px;
+}
+
+.turn-box { 
+    font-size: 1rem; 
+    padding: 5px; 
+    border-radius: 5px; 
+    margin-top: 5px; 
+    font-weight: bold; 
+}
+.mi-turno { background: var(--success); color: white; }
+.victoria { background: var(--success); color: white; }
+.derrota { background: var(--error); color: white; }
+
+.game-content { 
+    flex-grow: 1; 
+    overflow-y: auto; 
+    padding: 15px; 
+    display: flex;
+    flex-direction: column;
+}
+
+.tab-content { display: none; flex-direction: column; align-items: center; width: 100%; }
+.tab-content.activa { display: flex; }
+
+#canvas { 
+    max-width: 100%; 
+    height: auto; 
+    background: white; 
+    border: 1px solid #e2e8f0; 
+    border-radius: 8px;
+}
+
+.math-box { 
+    background: #eff6ff; 
+    padding: 15px; 
+    border-radius: 12px; 
+    border: 1px solid #bfdbfe; 
+    width: 100%; 
+    box-sizing: border-box; 
+}
+
+.keyboard { 
+    display: grid; 
+    grid-template-columns: repeat(7, 1fr); 
+    gap: 4px; 
+    width: 100%; 
+    margin-top: 10px;
+}
+
+.k-btn { 
+    padding: 12px 0; 
+    border: none; 
+    background: #f1f5f9; 
+    border-radius: 6px; 
+    font-weight: bold; 
+    cursor: pointer; 
+}
+.k-btn:disabled { opacity: 0.3; }
+
+.bottom-nav { 
+    display: flex; 
+    background: #fff; 
+    border-top: 1px solid #e2e8f0; 
+    border-bottom: 3px solid transparent;
+    padding-bottom: env(safe-area-inset-bottom);
+    flex-shrink: 0;
+}
+
+.nav-btn { 
+    flex: 1; 
+    padding: 12px; 
+    background: none; 
+    border: none; 
+    font-weight: bold; 
+    color: #64748b; 
+    border-bottom: 3px solid transparent;
+}
+.nav-btn.activo { color: var(--accent); border-bottom-color: var(--accent); }
+
+input { 
+    width: 100%; 
+    padding: 12px; 
+    margin: 8px 0; 
+    border-radius: 8px; 
+    border: 1px solid #cbd5e1; 
+    box-sizing: border-box; 
+    font-size: 1rem; 
+}
+
+.btn-main { 
+    width: 100%; 
+    padding: 12px; 
+    border-radius: 8px; 
+    border: none; 
+    background: var(--accent); 
+    color: white; 
+    font-weight: bold; 
+    cursor: pointer; 
+}
+
+.btn-opcion {
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #cbd5e1;
+    background: white;
+    color: var(--text);
+    font-weight: bold;
+    cursor: pointer;
+    text-align: center;
+}
+
+.btn-opcion:hover {
+    background: #f1f5f9;
+}
+
+/* ESTILOS DEL CERTIFICADO */
+.modal-certificado {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.modal-certificado.activo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.certificado-contenedor {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+.certificado {
+    background: linear-gradient(135deg, #fff9e6 0%, #ffecb3 100%);
+    border: 3px solid #d4af37;
+    border-radius: 15px;
+    padding: 40px;
+    max-width: 500px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    position: relative;
+}
+
+.certificado::before {
+    content: "✨";
+    position: absolute;
+    top: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 2rem;
+}
+
+.certificado::after {
+    content: "✨";
+    position: absolute;
+    bottom: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 2rem;
+}
+
+.certificado-header {
+    border-bottom: 2px solid #d4af37;
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+}
+
+.certificado-header h1 {
+    margin: 0;
+    color: #b8860b;
+    font-size: 1.8rem;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.certificado-body {
+    padding: 20px 0;
+}
+
+.cert-texto {
+    margin: 8px 0;
+    color: #2d2d2d;
+    font-size: 1rem;
+}
+
+.cert-nombre {
+    margin: 15px 0;
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #b8860b;
+    text-transform: uppercase;
+    border-bottom: 2px solid #d4af37;
+    padding-bottom: 10px;
+}
+
+.cert-juego {
+    margin: 15px 0;
+    font-size: 1.4rem;
+    font-weight: bold;
+    color: #0f172a;
+}
+
+.cert-fecha {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #d4af37;
+    font-size: 0.95rem;
+    color: #2d2d2d;
+}
+
+.certificado-footer {
+    border-top: 2px solid #d4af37;
+    padding-top: 15px;
+    margin-top: 15px;
+    color: #b8860b;
+}
+
+.certificado-botones {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+    max-width: 500px;
+}
+
+.certificado-botones .btn-main {
+    flex: 1;
+}

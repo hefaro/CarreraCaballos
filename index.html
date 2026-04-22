@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ahorcado Matemático - Narciso Cabal</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="pantalla-inicio" class="pantalla activa">
+        <div style="width:100%">
+            <h2 style="margin:0; color: var(--primary);">Ahorcado Matemático v5</h2>
+            <p style="margin:5px 0 20px; color: #64748b;">Narciso Cabal Salcedo</p>
+            <input type="text" id="in-sala" placeholder="Código de la Sala">
+            <input type="text" id="in-equipo" placeholder="Nombre de tu Equipo">
+            <button id="btn-unir" class="btn-main">ENTRAR</button>
+            <button id="btn-crear" class="btn-main" style="background:#64748b; margin-top:10px;">CREAR SALA</button>
+        </div>
+    </div>
+
+    <div id="pantalla-juego" class="pantalla">
+        <div class="game-header">
+            <div class="header-top">
+                <span id="lbl-sala">SALA: --</span>
+                <span id="lbl-errores" style="color: #fca5a5;">Errores: 0/6</span>
+                <button id="btn-salir" class="btn-salir">SALIR</button>
+            </div>
+            <div class="word-box" id="display-palabra"></div>
+            <div class="turn-box" id="display-turno">Cargando...</div>
+        </div>
+
+        <div class="game-content">
+            <div id="vista-tablero" class="tab-content activa">
+                <canvas id="canvas" width="200" height="180"></canvas>
+                <div id="contenedor-jugadores" style="display:flex; flex-wrap:wrap; gap:5px; margin-top:10px;"></div>
+                <button id="btn-reiniciar" class="btn-main" style="display:none; margin-top:20px; background: var(--success);">JUGAR DE NUEVO</button>
+            </div>
+
+            <div id="vista-controles" class="tab-content">
+                <div id="caja-reto" class="math-box">
+                    <div id="txt-pregunta" style="font-weight:bold; margin-bottom:10px;">--</div>
+                    <div id="opciones-reto" style="display: flex; flex-direction: column; gap: 5px;">
+                        <button class="btn-opcion" data-index="0">--</button>
+                        <button class="btn-opcion" data-index="1">--</button>
+                        <button class="btn-opcion" data-index="2">--</button>
+                        <button class="btn-opcion" data-index="3">--</button>
+                    </div>
+                </div>
+                <div id="caja-teclado" style="display:none; width:100%;">
+                    <div class="keyboard" id="teclado"></div>
+                    <input type="text" id="in-arriesgar" placeholder="¿Sabes la palabra?" style="margin-top:15px; text-transform: uppercase;">
+                    <button id="btn-arriesgar" class="btn-main" style="background:#f59e0b;">ARRIESGAR</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="bottom-nav">
+            <button class="nav-btn activo" id="btn-nav-tablero">TABLERO</button>
+            <button class="nav-btn" id="btn-nav-jugar">JUGAR</button>
+        </div>
+    </div>
+
+    <!-- MODAL DE CERTIFICADO -->
+    <div id="modal-certificado" class="modal-certificado">
+        <div class="certificado-contenedor">
+            <div id="certificado" class="certificado">
+                <div class="certificado-header">
+                    <h1>🎓 CERTIFICADO DE VICTORIA 🎓</h1>
+                </div>
+                <div class="certificado-body">
+                    <p class="cert-texto">Orgullosamente se presenta a</p>
+                    <p class="cert-nombre" id="cert-nombre">--</p>
+                    <p class="cert-texto">Por haber descubierto exitosamente la frase en</p>
+                    <p class="cert-juego">AHORCADO MATEMÁTICO</p>
+                    <p class="cert-texto">Demostrando habilidad en lógica y razonamiento</p>
+                    <div class="cert-fecha">
+                        <p>Fecha: <span id="cert-fecha">--</span></p>
+                    </div>
+                </div>
+                <div class="certificado-footer">
+                    <p style="margin:0; font-size:0.9em;">🌟 ¡Felicidades! 🌟</p>
+                </div>
+            </div>
+            <div class="certificado-botones">
+                <button id="btn-descargar-cert" class="btn-main" style="background: #22c55e;">DESCARGAR</button>
+                <button id="btn-cerrar-cert" class="btn-main" style="background: #64748b;">CERRAR</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="script.js"></script>
+</body>
+</html>
