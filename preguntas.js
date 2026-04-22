@@ -67,16 +67,16 @@ export const retos = [
     {q: "Valor de x en: x + x + x = 12", ...generarOpciones(4)},
 
     // --- Estadística y Probabilidad ---
-    {q: "Media de: 5, 5, 10, 10", a: 7.5},
-    {q: "Si lanzas un dado, ¿cuántos resultados posibles hay?", a: 6},
-    {q: "Moda de los datos: 2, 3, 3, 4, 5, 3", a: 3},
-    {q: "Rango de los datos: 10, 20, 30, 40", a: 30},
-    {q: "Si un evento es seguro, su probabilidad es (%)", a: 100},
-    {q: "Mediana de: 1, 3, 5, 7, 9", a: 5},
-    {q: "Probabilidad de cara al lanzar una moneda (%)", a: 50},
-    {q: "¿Suma de frecuencias relativas siempre es?", a: 1},
-    {q: "Si hay 4 bolas rojas y 6 azules, ¿total de bolas?", a: 10},
-    {q: "Si la media de 2 números es 10, ¿cuánto suman?", a: 20},
-    {q: "La mitad de la población equivale al (%)", a: 50},
-    {q: "Cuántos grados tiene un grafico circular", a: 360}
+    {q: "Media de: 5, 5, 10, 10", ...generarOpciones(8)},
+    {q: "Si lanzas un dado, ¿cuántos resultados posibles hay?", ...generarOpciones(6)},
+    {q: "Moda de los datos: 2, 3, 3, 4, 5, 3", ...generarOpciones(3)},
+    {q: "Rango de los datos: 10, 20, 30, 40", ...generarOpciones(30)},
+    {q: "Si un evento es seguro, su probabilidad es (%)", ...generarOpciones(100)},
+    {q: "Mediana de: 1, 3, 5, 7, 9", ...generarOpciones(5)},
+    {q: "Probabilidad de cara al lanzar una moneda (%)", ...generarOpciones(50)},
+    {q: "¿Suma de frecuencias relativas siempre es?", ...generarOpciones(1)},
+    {q: "Si hay 4 bolas rojas y 6 azules, ¿total de bolas?", ...generarOpciones(10)},
+    {q: "Si la media de 2 números es 10, ¿cuánto suman?", ...generarOpciones(20)},
+    {q: "La mitad de la población equivale al (%)", ...generarOpciones(50)},
+    {q: "Cuántos grados tiene un grafico circular", ...generarOpciones(360)}
 ];

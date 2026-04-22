@@ -21,18 +21,48 @@ const sonido = {
 
 let miSala = "", miEquipo = "", miData = {};
 let retosDisponibles = [];
+let miPuntuacion = 5.0; // Puntuación inicial
+let puntajes = {}; // Almacenar puntuaciones de todos los equipos
 
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 
+// Ajustar tamaño del canvas
+function ajustarCanvas() {
+    const container = canvas.parentElement;
+    if (!container) return;
+    
+    // Esperar a que el contenedor sea visible
+    let width = container.offsetWidth;
+    let attempts = 0;
+    while (width === 0 && attempts < 10) {
+        width = container.offsetWidth;
+        attempts++;
+    }
+    
+    width = Math.max(300, width - 20);
+    const height = Math.max(300, width * 0.75);
+    
+    canvas.width = width;
+    canvas.height = height;
+}
+
 // --- EVENTOS DE INTERFAZ ---
-document.getElementById('btn-nav-tablero').onclick = () => cambiarTab('tablero');
+document.getElementById('btn-nav-tablero').onclick = () => {
+    cambiarTab('tablero');
+    ajustarCanvas();
+};
 document.getElementById('btn-nav-jugar').onclick = () => cambiarTab('controles');
 document.getElementById('btn-crear').onclick = crearSala;
 document.getElementById('btn-unir').onclick = unirseSala;
 document.getElementById('btn-salir').onclick = salirSala;
 document.getElementById('btn-reiniciar').onclick = reiniciarJuego;
-document.getElementById('btn-arriesgar').onclick = arriesgarPalabra;
+
+window.addEventListener('resize', () => {
+    if (document.getElementById('pantalla-juego').classList.contains('activa')) {
+        ajustarCanvas();
+    }
+});
 
 // --- FUNCIONES DE NAVEGACIÓN ---
 function cambiarTab(vista) {
@@ -50,16 +80,24 @@ async function crearSala() {
     if(!miSala || !miEquipo) return alert("Faltan datos");
 
     const palabra = banco[Math.floor(Math.random() * banco.length)];
+    
+    // Inicializar sesión con estructura de progreso
     await set(ref(db, `sesiones/${miSala}`), {
         palabra_actual: palabra,
-        letras_adivinadas: [""],
-        errores: 0,
-        estado: "jugando", // Puede ser: jugando, victoria, derrota
+        estado: "jugando",
         ganador: "",
         jugadores: {[miEquipo]: true},
         orden_turnos: [miEquipo],
-        turno_index: 0
+        turno_index: 0,
+        progreso: {
+            [miEquipo]: 0 // 0% al inicio
+        },
+        puntajes: {
+            [miEquipo]: 5.0 // Puntuación inicial 5.0
+        }
     });
+    
+    miPuntuacion = 5.0;
     iniciarJuego();
 }
 
@@ -74,10 +112,22 @@ async function unirseSala() {
     let d = s.val();
     let jug = d.jugadores || {};
     jug[miEquipo] = true;
+    
+    // Inicializar progreso y puntuación del nuevo equipo
+    const progreso = d.progreso || {};
+    progreso[miEquipo] = 0;
+    
+    const puntos = d.puntajes || {};
+    puntos[miEquipo] = 5.0;
+    
     await update(ref(db, `sesiones/${miSala}`), {
         jugadores: jug,
-        orden_turnos: Object.keys(jug).sort()
+        orden_turnos: Object.keys(jug).sort(),
+        progreso: progreso,
+        puntajes: puntos
     });
+    
+    miPuntuacion = 5.0;
     iniciarJuego();
 }
 
@@ -102,20 +152,30 @@ async function salirSala() {
 
 async function reiniciarJuego() {
     const nuevaPalabra = banco[Math.floor(Math.random() * banco.length)];
+    certificadoMostrado = false;
     await update(ref(db, `sesiones/${miSala}`), {
         palabra_actual: nuevaPalabra,
-        letras_adivinadas: [""],
-        errores: 0,
         estado: "jugando",
         ganador: "",
-        turno_index: 0
+        turno_index: 0,
+        progreso: Object.keys(miData.jugadores || {}).reduce((acc, eq) => {
+            acc[eq] = 0;
+            return acc;
+        }, {}),
+        puntajes: Object.keys(miData.jugadores || {}).reduce((acc, eq) => {
+            acc[eq] = 5.0;
+            return acc;
+        }, {})
     });
+    miPuntuacion = 5.0;
 }
 
 function iniciarJuego() {
     document.getElementById('pantalla-inicio').style.display = 'none';
     document.getElementById('pantalla-juego').classList.add('activa');
     document.getElementById('lbl-sala').innerText = `SALA: ${miSala.toUpperCase()}`;
+    
+    ajustarCanvas();
     
     onValue(ref(db, `sesiones/${miSala}`), (snap) => {
         miData = snap.val();
@@ -127,20 +187,25 @@ function iniciarJuego() {
 
 // --- RENDERIZADO Y CONTROL DE ESTADOS ---
 function render() {
-    const box = document.getElementById('display-palabra');
-    box.innerHTML = "";
+    if (!miData || !miData.orden_turnos) return; // Validación básica
     
-    // Si el juego terminó, mostramos toda la palabra
-    const revelarTodo = (miData.estado === "victoria" || miData.estado === "derrota");
+    // Actualizar puntuación
+    puntajes = miData.puntajes || {};
+    miPuntuacion = puntajes[miEquipo] || 5.0;
+    document.getElementById('lbl-puntuacion').innerText = `Puntuación: ${miPuntuacion.toFixed(1)}`;
+    console.log('Render - Mi puntuación:', miPuntuacion, 'Todos los puntajes:', puntajes, 'Progreso:', miData.progreso);
 
-    miData.palabra_actual.split("").forEach(letra => {
-        const span = document.createElement('span');
-        span.innerText = (revelarTodo || miData.letras_adivinadas.includes(letra)) ? letra : "_";
-        box.appendChild(span);
-    });
-
-    document.getElementById('lbl-errores').innerText = `Errores: ${miData.errores}/6`;
-    dibujar(miData.errores);
+    // Asegurar que canvas tiene dimensiones antes de dibujar
+    if (canvas.width === 0 || canvas.height === 0) {
+        ajustarCanvas();
+    }
+    
+    // Dibujar pista de carreras
+    try {
+        dibujarPista(miData.progreso || {});
+    } catch (e) {
+        console.error('Error al dibujar pista:', e);
+    }
 
     const miTurno = miData.orden_turnos[miData.turno_index] === miEquipo;
     const tBox = document.getElementById('display-turno');
@@ -148,24 +213,25 @@ function render() {
     // Gestión de Estados Visuales
     tBox.className = "turn-box";
     if (miData.estado === "victoria") {
-        tBox.innerText = `¡VICTORIA! Ganó: ${miData.ganador}`;
+        tBox.innerText = `🏁 ¡GANADOR! ${miData.ganador}`;
         tBox.classList.add("victoria");
-        sonido.victoria(); // Suena cada que sincroniza, podrías controlarlo para que suene 1 vez
-        mostrarCertificado(miData.ganador);
-    } else if (miData.estado === "derrota") {
-        tBox.innerText = `¡DERROTA! La palabra era ${miData.palabra_actual}`;
-        tBox.classList.add("derrota");
+        sonido.victoria();
+        registrarResultado(miData.ganador, puntajes[miData.ganador] || 5.0);
+        mostrarCertificado(miData.ganador, puntajes[miData.ganador] || 5.0);
     } else {
         tBox.innerText = miTurno ? "🎯 TU TURNO" : `Espera a: ${miData.orden_turnos[miData.turno_index]}`;
         if (miTurno) tBox.classList.add("mi-turno");
     }
 
-    // Ocultar/Mostrar botón de reinicio y bloquear teclado si no están jugando
+    // Ocultar/Mostrar botón de reinicio
     document.getElementById('btn-reiniciar').style.display = (miData.estado !== "jugando") ? "block" : "none";
     document.getElementById('vista-controles').style.pointerEvents = (miData.estado !== "jugando" || !miTurno) ? "none" : "auto";
     document.getElementById('vista-controles').style.opacity = (miData.estado !== "jugando" || !miTurno) ? "0.5" : "1";
-
-    actualizarTeclado(miTurno && miData.estado === "jugando");
+    
+    // Auto preparar reto si es turno del usuario
+    if (miTurno && miData.estado === "jugando" && document.getElementById('txt-pregunta').innerText === "--") {
+        prepararReto();
+    }
 }
 
 // --- MECÁNICAS DE JUEGO ---
@@ -189,71 +255,68 @@ function prepararReto() {
         btn.innerText = r.opciones[index];
         btn.onclick = () => verificarRetoMatematico(index);
     });
-    
-    document.getElementById('caja-reto').style.display = "block";
-    document.getElementById('caja-teclado').style.display = "none";
 }
 
 function verificarRetoMatematico(selectedIndex) {
     const correctIndex = parseInt(document.getElementById('txt-pregunta').dataset.correct);
+    
     if(selectedIndex === correctIndex) {
         sonido.exito();
-        document.getElementById('caja-reto').style.display = "none";
-        document.getElementById('caja-teclado').style.display = "block";
+        // Acierto: +10% de progreso
+        const progreso = miData.progreso || {};
+        const nuevoProgreso = Math.min(100, (progreso[miEquipo] || 0) + 10);
+        progreso[miEquipo] = nuevoProgreso;
+        
+        // Verificar victoria
+        let nuevoEstado = miData.estado;
+        let ganador = "";
+        if (nuevoProgreso >= 100) {
+            nuevoEstado = "victoria";
+            ganador = miEquipo;
+        }
+        
+        // Pasar al siguiente turno (excepto si hay victoria)
+        let nIndex = miData.turno_index;
+        if (nuevoEstado === "jugando") {
+            nIndex = (miData.turno_index + 1) % miData.orden_turnos.length;
+        }
+        
+        console.log('Respuesta correcta - Progreso:', nuevoProgreso, 'Turno:', nIndex);
+        update(ref(db, `sesiones/${miSala}`), {
+            progreso: progreso,
+            turno_index: nIndex,
+            estado: nuevoEstado,
+            ganador: ganador
+        });
+        cambiarTab('tablero');
+        setTimeout(() => ajustarCanvas(), 300);
     } else {
         sonido.error();
-        alert("Incorrecto. Pasas turno.");
-        // Si falla el reto, pasa turno
+        alert("Incorrecto. Penalización: -0.5 puntos. Pasas turno.");
+        
+        // Penalización: -0.5 puntos (mínimo 1.0)
+        // IMPORTANTE: Preservar puntajes de TODOS los equipos
+        const puntajes = miData.puntajes || {};
+        const nuevaPuntuacion = Math.max(1.0, (puntajes[miEquipo] || 5.0) - 0.5);
+        puntajes[miEquipo] = nuevaPuntuacion;
+        
+        // Pasar turno al siguiente equipo
         let nIndex = (miData.turno_index + 1) % miData.orden_turnos.length;
-        update(ref(db, `sesiones/${miSala}`), { turno_index: nIndex });
-        prepararReto();
+        
+        console.log('Respuesta incorrecta - Puntuación:', nuevaPuntuacion, 'Puntajes:', puntajes, 'Turno:', nIndex);
+        update(ref(db, `sesiones/${miSala}`), {
+            turno_index: nIndex,
+            puntajes: puntajes
+        });
+        
         cambiarTab('tablero');
+        setTimeout(() => ajustarCanvas(), 300);
     }
 }
 
 function actualizarTeclado(activo) {
-    const t = document.getElementById('teclado');
-    t.innerHTML = "";
-    "ABCDEFGHIJKLMNÑOPQRSTUVWXYZ".split("").forEach(l => {
-        const b = document.createElement('button');
-        b.className = "k-btn"; b.innerText = l;
-        b.disabled = !activo || miData.letras_adivinadas.includes(l);
-        
-        b.onclick = async () => {
-            const acierto = miData.palabra_actual.includes(l);
-            if(acierto) sonido.exito(); else sonido.error();
-            
-            const nuevasLetras = [...miData.letras_adivinadas, l];
-            const nuevosErrores = miData.errores + (acierto ? 0 : 1);
-            let nIndex = miData.turno_index;
-            
-            // Evaluar Victoria o Derrota
-            let nuevoEstado = "jugando";
-            let ganador = "";
-            const gano = miData.palabra_actual.split("").every(letra => nuevasLetras.includes(letra));
-            
-            if(gano) {
-                nuevoEstado = "victoria";
-                ganador = miEquipo;
-            } else if (nuevosErrores >= 6) {
-                nuevoEstado = "derrota";
-            }
-
-            if(!acierto && nuevoEstado === "jugando") nIndex = (nIndex + 1) % miData.orden_turnos.length;
-
-            await update(ref(db, `sesiones/${miSala}`), {
-                letras_adivinadas: nuevasLetras,
-                errores: nuevosErrores,
-                turno_index: nIndex,
-                estado: nuevoEstado,
-                ganador: ganador
-            });
-            
-            prepararReto();
-            cambiarTab('tablero');
-        };
-        t.appendChild(b);
-    });
+    // En Grand Prix no usamos teclado alfabético, solo retos de opción múltiple
+    // Esta función no hace nada
 }
 
 async function arriesgarPalabra() {
@@ -261,65 +324,126 @@ async function arriesgarPalabra() {
     const intento = input.value.trim().toUpperCase();
     if(!intento) return;
 
-    if(intento === miData.palabra_actual) {
-        sonido.exito();
-        await update(ref(db, `sesiones/${miSala}`), {
-            estado: "victoria",
-            ganador: miEquipo
-        });
-    } else {
-        sonido.error();
-        const nuevosErrores = miData.errores + 1;
-        let nuevoEstado = nuevosErrores >= 6 ? "derrota" : "jugando";
-        let nIndex = (miData.turno_index + 1) % miData.orden_turnos.length;
-
-        await update(ref(db, `sesiones/${miSala}`), {
-            errores: nuevosErrores,
-            turno_index: nIndex,
-            estado: nuevoEstado
-        });
-        alert(`¡Incorrecto! La palabra no es ${intento}`);
-    }
+    // En Grand Prix, el "arriesgar" es simplemente pasar turno sin responder
+    // No penalizamos por arriesgar, solo pasamos turno
+    let nIndex = (miData.turno_index + 1) % miData.orden_turnos.length;
+    
+    await update(ref(db, `sesiones/${miSala}`), {
+        turno_index: nIndex
+    });
     
     input.value = "";
     prepararReto();
     cambiarTab('tablero');
 }
 
-// --- DIBUJO DEL AHORCADO ---
-function dibujar(e) {
-    ctx.clearRect(0,0,200,180);
-    ctx.strokeStyle = "#334155"; ctx.lineWidth = 3;
-    ctx.beginPath(); 
-    ctx.moveTo(10,170); ctx.lineTo(100,170); // Base
-    ctx.moveTo(30,170); ctx.lineTo(30,10); ctx.lineTo(80,10); ctx.lineTo(80,30);
+// --- DIBUJO DE PISTA DE CARRERAS ---
+function dibujarPista(progreso) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    const equipos = miData.orden_turnos || [];
+    const alturaCarril = canvas.height / equipos.length;
+    const anchoUtil = canvas.width - 60;
+    const colores = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#f9ca24', '#6c5ce7', '#a29bfe', '#fd79a8', '#fdcb6e'];
+    
+    // Dibujar meta (línea de meta a la derecha)
+    ctx.strokeStyle = '#2ecc71';
+    ctx.lineWidth = 3;
+    ctx.setLineDash([10, 5]);
+    ctx.beginPath();
+    ctx.moveTo(canvas.width - 15, 0);
+    ctx.lineTo(canvas.width - 15, canvas.height);
     ctx.stroke();
-    if(e>0) { ctx.beginPath(); ctx.arc(80,45,15,0,7); ctx.stroke(); } // Cabeza
-    if(e>1) { ctx.beginPath(); ctx.moveTo(80,60); ctx.lineTo(80,110); ctx.stroke(); } // Cuerpo
-    if(e>2) { ctx.beginPath(); ctx.moveTo(80,75); ctx.lineTo(60,100); ctx.stroke(); } // Brazo L
-    if(e>3) { ctx.beginPath(); ctx.moveTo(80,75); ctx.lineTo(100,100); ctx.stroke(); } // Brazo R
-    if(e>4) { ctx.beginPath(); ctx.moveTo(80,110); ctx.lineTo(60,140); ctx.stroke(); } // Pierna L
-    if(e>5) { ctx.beginPath(); ctx.moveTo(80,110); ctx.lineTo(100,140); ctx.stroke(); } // Pierna R
+    ctx.setLineDash([]);
+    
+    ctx.fillStyle = '#2ecc71';
+    ctx.font = 'bold 14px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('🏁', canvas.width - 8, 20);
+    
+    // Dibujar cada carril
+    equipos.forEach((equipo, index) => {
+        const y = index * alturaCarril + alturaCarril / 2;
+        const color = colores[index % colores.length];
+        
+        // Línea del carril
+        ctx.strokeStyle = '#ddd';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([5, 5]);
+        ctx.beginPath();
+        ctx.moveTo(40, y);
+        ctx.lineTo(canvas.width - 20, y);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        
+        // Calcular posición del caballo basado en progreso
+        const progresoPorcentaje = (progreso[equipo] || 0) / 100;
+        const xCaballo = 40 + progresoPorcentaje * anchoUtil;
+        
+        // Dibujar caballo (círculo)
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(xCaballo, y, 15, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Borde del caballo
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        // Número de progreso en el caballo
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 12px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(`${progreso[equipo] || 0}%`, xCaballo, y);
+        
+        // Nombre del equipo
+        ctx.fillStyle = '#333';
+        ctx.font = 'bold 13px Arial';
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(equipo, 35, y);
+        
+        // Indicador de turno actual
+        if (miData.orden_turnos[miData.turno_index] === equipo) {
+            ctx.strokeStyle = '#f39c12';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(xCaballo, y, 18, 0, Math.PI * 2);
+            ctx.stroke();
+            
+            // Estrella indicadora
+            ctx.fillStyle = '#f39c12';
+            ctx.font = 'bold 16px Arial';
+            ctx.fillText('⭐', xCaballo, y - 25);
+        }
+    });
+    
+    // Mostrar título
+    ctx.fillStyle = '#2c3e50';
+    ctx.font = 'bold 16px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('🏁 GRAND PRIX MATEMÁTICO 🏁', canvas.width / 2, 25);
 }
 
 // --- CERTIFICADO DE GANADOR ---
 let certificadoMostrado = false;
 
-function mostrarCertificado(ganador) {
-    if(certificadoMostrado) return; // Evitar mostrar múltiples veces
+function mostrarCertificado(ganador, puntuacion) {
+    if(certificadoMostrado) return;
     certificadoMostrado = true;
 
-    // Llenar datos del certificado
     document.getElementById('cert-nombre').innerText = ganador;
+    document.getElementById('cert-puntuacion').innerText = puntuacion.toFixed(1);
+    
     const hoy = new Date();
     const fechaFormato = hoy.toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
-    document.getElementById('cert-fecha').innerHTML = `Fecha: <strong>${fechaFormato}</strong>`;
+    document.getElementById('cert-fecha').innerHTML = fechaFormato;
     
-    // Mostrar modal
     const modal = document.getElementById('modal-certificado');
     modal.classList.add('activo');
     
-    // Agregar event listeners si no existen
     if(!document.getElementById('btn-descargar-cert').onclick) {
         document.getElementById('btn-descargar-cert').onclick = descargarCertificado;
     }
@@ -333,8 +457,22 @@ function cerrarCertificado() {
     modal.classList.remove('activo');
 }
 
+async function registrarResultado(ganador, puntuacion) {
+    // Guardar resultado en Firebase bajo resultados/{sala}
+    try {
+        await set(ref(db, `resultados/${miSala}/${ganador}`), {
+            equipo: ganador,
+            puntuacion: puntuacion,
+            fecha: new Date().toISOString(),
+            ganador: true
+        });
+        console.log('Resultado registrado:', ganador, puntuacion);
+    } catch (e) {
+        console.error('Error al registrar resultado:', e);
+    }
+}
+
 async function descargarCertificado() {
-    // Cargar html2canvas
     const script = document.createElement('script');
     script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
     document.head.appendChild(script);
